@@ -42,3 +42,6 @@ button:active { transform: scale(.98); }
 .controls { position: absolute; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); display: flex; gap: 8px; z-index: 5; }
 .controls button { flex: 1; }
 @media (max-width: 520px) { .topbar { align-items: flex-start; } .topbar button { padding: .55rem .75rem; } }
+.marker.waiting { max-width: 320px; opacity: .92; }
+.marker.waiting .label { border-color: rgba(255,255,255,.28); }
+.marker.waiting .distance { display: block; max-width: 280px; }
