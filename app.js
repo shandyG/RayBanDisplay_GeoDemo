@@ -5,10 +5,13 @@
 
   const state = {
     position: null,
+    usingDemoPosition: false,
     heading: 0,
     selectedIndex: 0,
     detailOpen: false,
-    markerMetrics: []
+    markerMetrics: [],
+    geoWatchId: null,
+    lastGpsAt: null
   };
 
   const els = {
@@ -57,30 +60,68 @@
   }
 
   function formatDistance(m) {
-    if (!Number.isFinite(m)) return '-- m';
+    if (!Number.isFinite(m)) return 'GPS待機中';
     return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
   }
 
-  function setupGeolocation() {
+  function isSecureEnoughForGps() {
+    return window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  }
+
+  function setMode(text) {
+    els.mode.textContent = text;
+  }
+
+  function startGeolocation() {
     if (!('geolocation' in navigator)) {
-      els.mode.textContent = 'Geolocation非対応。デモ位置を使ってください。';
+      setMode('Geolocation非対応。デモ位置のみ使用できます。');
       return;
     }
-    navigator.geolocation.watchPosition(
-      pos => {
-        state.position = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy
-        };
-        els.mode.textContent = `GPS ${Math.round(pos.coords.accuracy)}m`;
-        render();
-      },
-      err => {
-        els.mode.textContent = `GPS未許可: ${err.message}`;
-      },
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+    if (!isSecureEnoughForGps()) {
+      setMode('GPS不可: HTTPSで公開してください');
+      return;
+    }
+
+    if (state.geoWatchId !== null) {
+      navigator.geolocation.clearWatch(state.geoWatchId);
+      state.geoWatchId = null;
+    }
+
+    setMode('GPS取得中... 位置情報を許可してください');
+
+    navigator.geolocation.getCurrentPosition(
+      onGeoSuccess,
+      onGeoError,
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
     );
+
+    state.geoWatchId = navigator.geolocation.watchPosition(
+      onGeoSuccess,
+      onGeoError,
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 30000 }
+    );
+  }
+
+  function onGeoSuccess(pos) {
+    state.position = {
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude,
+      accuracy: pos.coords.accuracy
+    };
+    state.usingDemoPosition = false;
+    state.lastGpsAt = new Date();
+    setMode(`GPS ${Math.round(pos.coords.accuracy)}m / ${state.position.lat.toFixed(6)}, ${state.position.lng.toFixed(6)}`);
+    render();
+  }
+
+  function onGeoError(err) {
+    const hint = {
+      1: '位置情報が拒否されています',
+      2: '現在地を取得できません',
+      3: 'GPSタイムアウト'
+    }[err.code] || err.message;
+    setMode(`GPS待機中: ${hint}`);
+    render();
   }
 
   async function requestOrientationPermission() {
@@ -91,7 +132,7 @@
     }
     window.addEventListener('deviceorientationabsolute', onOrientation, true);
     window.addEventListener('deviceorientation', onOrientation, true);
-    els.mode.textContent = state.position ? 'GPS/IMU動作中' : 'IMU動作中。GPS待機中';
+    if (!state.position) setMode('IMU動作中。GPS取得中...');
   }
 
   function onOrientation(ev) {
@@ -105,13 +146,21 @@
   }
 
   function computeMetrics() {
-    const origin = state.position || DEMO_POSITION;
+    const origin = state.position;
     return window.MARKERS.map((marker, index) => {
+      if (!origin) {
+        return { marker, index, distance: NaN, bearing: NaN, angle: 0, waitingForGps: true };
+      }
       const distance = distanceMeters(origin, marker);
       const bearing = bearingDeg(origin, marker);
       const angle = signedAngleDiff(bearing, state.heading);
-      return { marker, index, distance, bearing, angle };
-    }).sort((a, b) => a.distance - b.distance);
+      return { marker, index, distance, bearing, angle, waitingForGps: false };
+    }).sort((a, b) => {
+      if (!Number.isFinite(a.distance) && !Number.isFinite(b.distance)) return a.index - b.index;
+      if (!Number.isFinite(a.distance)) return 1;
+      if (!Number.isFinite(b.distance)) return -1;
+      return a.distance - b.distance;
+    });
   }
 
   function select(delta) {
@@ -131,6 +180,19 @@
     render();
   }
 
+  function renderWaitingOverlay() {
+    const el = document.createElement('div');
+    el.className = 'marker waiting';
+    el.style.left = '50%';
+    el.style.top = '48%';
+    el.innerHTML = `
+      <div class="label">
+        <span class="name">GPS待機中</span>
+        <span class="distance">「GPS/IMU許可」を押すか、HTTPSと位置情報権限を確認</span>
+      </div>`;
+    els.markerLayer.appendChild(el);
+  }
+
   function render() {
     state.markerMetrics = computeMetrics();
     const selected = window.MARKERS[state.selectedIndex];
@@ -138,17 +200,22 @@
     els.radar.innerHTML = '';
     els.compass.textContent = `方位 ${Math.round(state.heading)}°`;
 
+    if (!state.position) {
+      renderWaitingOverlay();
+    }
+
     for (const item of state.markerMetrics) {
       const { marker, distance, angle } = item;
       const isSelected = marker.id === selected.id;
-      const visible = Math.abs(angle) <= FOV_DEG / 2 && distance <= MAX_RENDER_DISTANCE_M;
-      const xPercent = clamp(50 + (angle / (FOV_DEG / 2)) * 45, 4, 96);
-      const yPercent = clamp(45 + Math.log10(Math.max(distance, 1)) * 4, 38, 68);
-      const scale = clamp(1.45 - Math.log10(Math.max(distance, 2)) * 0.34, 0.48, 1.55);
-      const opacity = visible ? clamp(1.15 - distance / 900, 0.28, 1) : 0.18;
+      const hasGps = Number.isFinite(distance);
+      const visible = hasGps && Math.abs(angle) <= FOV_DEG / 2 && distance <= MAX_RENDER_DISTANCE_M;
+      const xPercent = hasGps ? clamp(50 + (angle / (FOV_DEG / 2)) * 45, 4, 96) : clamp(18 + item.index * 18, 10, 90);
+      const yPercent = hasGps ? clamp(45 + Math.log10(Math.max(distance, 1)) * 4, 38, 68) : 62;
+      const scale = hasGps ? clamp(1.45 - Math.log10(Math.max(distance, 2)) * 0.34, 0.48, 1.55) : 0.72;
+      const opacity = hasGps ? (visible ? clamp(1.15 - distance / 900, 0.28, 1) : 0.18) : 0.42;
 
       const el = document.createElement('div');
-      el.className = `marker ${isSelected ? 'selected' : ''} ${visible ? '' : 'offscreen'}`;
+      el.className = `marker ${isSelected ? 'selected' : ''} ${visible || !hasGps ? '' : 'offscreen'}`;
       el.style.left = `${xPercent}%`;
       el.style.top = `${yPercent}%`;
       el.style.opacity = String(opacity);
@@ -157,25 +224,30 @@
         <div class="pin"></div>
         <div class="label">
           <span class="name">${marker.name}</span>
-          <span class="distance">${formatDistance(distance)} / ${Math.round(angle)}°</span>
+          <span class="distance">${formatDistance(distance)}${hasGps ? ` / ${Math.round(angle)}°` : ''}</span>
         </div>`;
       els.markerLayer.appendChild(el);
 
-      const radarRadius = 42;
-      const radarDistance = clamp(distance / 700, 0, 1) * radarRadius;
-      const radarAngle = toRad(angle - 90);
-      const dot = document.createElement('div');
-      dot.className = 'radar-dot';
-      dot.style.left = `${46 + Math.cos(radarAngle) * radarDistance}px`;
-      dot.style.top = `${46 + Math.sin(radarAngle) * radarDistance}px`;
-      dot.style.opacity = isSelected ? '1' : '.45';
-      els.radar.appendChild(dot);
+      if (hasGps) {
+        const radarRadius = 42;
+        const radarDistance = clamp(distance / 700, 0, 1) * radarRadius;
+        const radarAngle = toRad(angle - 90);
+        const dot = document.createElement('div');
+        dot.className = 'radar-dot';
+        dot.style.left = `${46 + Math.cos(radarAngle) * radarDistance}px`;
+        dot.style.top = `${46 + Math.sin(radarAngle) * radarDistance}px`;
+        dot.style.opacity = isSelected ? '1' : '.45';
+        els.radar.appendChild(dot);
+      }
     }
 
     if (state.detailOpen) {
       const metric = state.markerMetrics.find(m => m.marker.id === selected.id);
+      const hasGps = metric && Number.isFinite(metric.distance);
       els.detailTitle.textContent = selected.name;
-      els.detailDistance.textContent = metric ? `距離 ${formatDistance(metric.distance)} / 方位 ${Math.round(metric.bearing)}° / 視線差 ${Math.round(metric.angle)}°` : '';
+      els.detailDistance.textContent = hasGps
+        ? `距離 ${formatDistance(metric.distance)} / 方位 ${Math.round(metric.bearing)}° / 視線差 ${Math.round(metric.angle)}°${state.usingDemoPosition ? ' / デモ位置' : ''}`
+        : '距離 GPS待機中';
       els.detailBody.textContent = selected.description;
       els.detailSource.textContent = `Source: ${selected.source}`;
       els.detailPanel.hidden = false;
@@ -213,19 +285,21 @@
     els.closeDetail.addEventListener('click', () => handleGesture('back'));
     els.demoBtn.addEventListener('click', () => {
       state.position = DEMO_POSITION;
-      els.mode.textContent = 'デモ位置: 新桜ケ丘第二公園';
+      state.usingDemoPosition = true;
+      setMode('デモ位置: 新桜ケ丘第二公園中心');
       render();
     });
     els.permissionBtn.addEventListener('click', async () => {
+      startGeolocation();
       try {
         await requestOrientationPermission();
       } catch (e) {
-        els.mode.textContent = 'IMU許可に失敗。ブラウザ設定を確認してください。';
+        setMode('GPS取得中 / IMU許可に失敗');
       }
     });
   }
 
   setupInput();
-  setupGeolocation();
+  startGeolocation();
   render();
 })();
