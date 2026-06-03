@@ -20,9 +20,6 @@
     mode: document.getElementById('mode'),
     compass: document.getElementById('compass'),
     permissionBtn: document.getElementById('permissionBtn'),
-    prevBtn: document.getElementById('prevBtn'),
-    nextBtn: document.getElementById('nextBtn'),
-    selectBtn: document.getElementById('selectBtn'),
     demoBtn: document.getElementById('demoBtn'),
     detailPanel: document.getElementById('detailPanel'),
     closeDetail: document.getElementById('closeDetail'),
@@ -256,11 +253,45 @@
     }
   }
 
+  function normalizeGestureName(name) {
+    if (!name) return '';
+    const raw = String(name).toLowerCase();
+    const aliases = {
+      previous: 'left',
+      prev: 'left',
+      swipeleft: 'right',
+      swipe_left: 'right',
+      nextright: 'right',
+      next: 'right',
+      swiperight: 'left',
+      swipe_right: 'left',
+      pinch: 'select',
+      tap: 'select',
+      confirm: 'select',
+      escape: 'back',
+      close: 'back',
+      cancel: 'back'
+    };
+    return aliases[raw] || raw;
+  }
+
+  let lastGesture = { name: '', at: 0 };
   function handleGesture(name) {
-    switch (name) {
+    const gesture = normalizeGestureName(name);
+    const now = performance.now();
+    if (!gesture) return;
+
+    // Band とブラウザの click/keydown が同時に発火する環境向けの二重入力ガード。
+    if (gesture === lastGesture.name && now - lastGesture.at < 320) return;
+    lastGesture = { name: gesture, at: now };
+
+    // 詳細表示中は、誤操作で選択中マーカーが動かないようにする。
+    if (state.detailOpen && (gesture === 'left' || gesture === 'right')) return;
+
+    switch (gesture) {
       case 'left': select(-1); break;
       case 'right': select(1); break;
-      case 'select': openDetail(); break;
+      case 'select': state.detailOpen ? closeDetail() : openDetail(); break;
       case 'back': closeDetail(); break;
       default: break;
     }
@@ -279,9 +310,7 @@
     window.addEventListener('neuralbandgesture', ev => handleGesture(ev.detail?.gesture));
     window.addEventListener('meta-neural-band', ev => handleGesture(ev.detail?.gesture));
 
-    els.prevBtn.addEventListener('click', () => handleGesture('left'));
-    els.nextBtn.addEventListener('click', () => handleGesture('right'));
-    els.selectBtn.addEventListener('click', () => handleGesture('select'));
+    // マーカー操作は Band / keyboard に一本化。画面ボタンでは移動・選択しない。
     els.closeDetail.addEventListener('click', () => handleGesture('back'));
     els.demoBtn.addEventListener('click', () => {
       state.position = DEMO_POSITION;
