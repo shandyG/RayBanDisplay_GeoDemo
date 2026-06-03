@@ -20,8 +20,8 @@ window.MARKERS = [
   {
     id: "collapse-risk-001",
     name: "倒壊のおそれあり",
-    lat: 35.4506387,
-    lng: 139.5627671,
+    lat: 35.4497574,
+    lng: 139.5633115,
     category: "hazard",
     description: "地震で家が傾いている",
     source: "ユーザー投稿データ"
