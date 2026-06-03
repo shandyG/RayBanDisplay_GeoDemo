@@ -1,47 +1,229 @@
 :root {
   --bg: #05070a;
-  --fg: #f3f7ff;
-  --muted: rgba(243, 247, 255, 0.66);
-  --panel: rgba(9, 15, 24, 0.78);
-  --line: rgba(255, 255, 255, 0.18);
-  --accent: #76f4ff;
+  --fg: #f8fbff;
+  --muted: rgba(248, 251, 255, 0.72);
+  --panel: rgba(255, 255, 255, 0.90);
+  --panel-fg: #102033;
+  --panel-muted: #52677f;
+  --line: rgba(255, 255, 255, 0.26);
+  --blue: #1e8fff;
+  --blue-soft: rgba(30, 143, 255, 0.18);
+  --red: #ff2f3d;
+  --red-soft: rgba(255, 47, 61, 0.20);
 }
 
 * { box-sizing: border-box; }
-html, body, #app { margin: 0; width: 100%; min-height: 100%; background: var(--bg); color: var(--fg); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+html, body, #app {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 body { overflow: hidden; }
-button { color: var(--fg); background: rgba(255,255,255,.11); border: 1px solid var(--line); border-radius: 999px; padding: .7rem .9rem; font: inherit; }
+
+button {
+  color: #0d2440;
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(30,143,255,.30);
+  border-radius: 999px;
+  padding: .7rem .9rem;
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 8px 22px rgba(0,0,0,.18);
+}
 button:active { transform: scale(.98); }
 
-.hud { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: radial-gradient(circle at 50% 42%, rgba(92, 255, 244, .08), transparent 34%), linear-gradient(180deg, rgba(255,255,255,.04), transparent 40%); }
-.topbar { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 12px; right: 12px; z-index: 5; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.hud {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(30, 143, 255, .24), transparent 33%),
+    radial-gradient(circle at 50% 60%, rgba(255, 47, 61, .10), transparent 32%),
+    linear-gradient(180deg, rgba(9, 24, 43, .72), #05070a 64%);
+}
+
+.topbar {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 22px;
+  background: rgba(255,255,255,.90);
+  color: #102033;
+  border: 1px solid rgba(255,255,255,.72);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 34px rgba(0,0,0,.22);
+}
 .topbar strong { display: block; font-size: .95rem; letter-spacing: .02em; }
-.topbar span { display: block; color: var(--muted); font-size: .78rem; margin-top: 2px; }
-.compass { position: absolute; top: 82px; left: 50%; transform: translateX(-50%); color: var(--muted); z-index: 3; font-variant-numeric: tabular-nums; }
-.reticle { position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%); font-size: 2rem; color: rgba(255,255,255,.45); text-shadow: 0 0 12px rgba(118,244,255,.55); z-index: 1; }
+.topbar span { display: block; color: #52677f; font-size: .78rem; margin-top: 2px; }
+
+.compass {
+  position: absolute;
+  top: 104px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,.88);
+  z-index: 3;
+  font-variant-numeric: tabular-nums;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(30,143,255,.24);
+  border: 1px solid rgba(255,255,255,.28);
+  backdrop-filter: blur(10px);
+}
+
+.reticle {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: rgba(255,255,255,.64);
+  text-shadow: 0 0 14px rgba(30,143,255,.62);
+  z-index: 1;
+}
+
 .marker-layer { position: absolute; inset: 0; z-index: 2; }
-.marker { position: absolute; left: 50%; top: 46%; min-width: 88px; max-width: 220px; transform: translate(-50%, -50%); display: grid; place-items: center; pointer-events: none; transition: transform .12s linear, opacity .12s linear; }
-.marker .pin { width: 44px; height: 44px; border-radius: 50% 50% 50% 6px; transform: rotate(-45deg); background: rgba(118,244,255,.22); border: 2px solid rgba(118,244,255,.88); box-shadow: 0 0 22px rgba(118,244,255,.35); }
-.marker .pin::after { content: ""; position: absolute; inset: 11px; border-radius: 50%; background: rgba(255,255,255,.85); }
-.marker .label { margin-top: 12px; padding: 8px 10px; border-radius: 14px; background: rgba(0,0,0,.52); border: 1px solid rgba(255,255,255,.16); backdrop-filter: blur(8px); text-align: center; }
-.marker .name { display: block; font-weight: 700; font-size: .9rem; }
-.marker .distance { color: var(--muted); font-size: .76rem; }
-.marker.selected .label { border-color: var(--accent); box-shadow: 0 0 20px rgba(118,244,255,.22); }
-.marker.offscreen { opacity: .25; }
-.radar { position: absolute; left: 16px; bottom: 92px; width: 92px; height: 92px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,.04); z-index: 3; }
-.radar::before, .radar::after { content: ""; position: absolute; background: var(--line); }
+.marker {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  min-width: 88px;
+  max-width: 220px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transition: transform .12s linear, opacity .12s linear;
+}
+.marker .pin {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50% 50% 50% 6px;
+  transform: rotate(-45deg);
+  background: linear-gradient(135deg, var(--red), #ff6b72);
+  border: 2px solid rgba(255,255,255,.96);
+  box-shadow: 0 0 0 7px var(--red-soft), 0 0 24px rgba(255,47,61,.50);
+}
+.marker .pin::after {
+  content: "";
+  position: absolute;
+  inset: 11px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 3px rgba(255,47,61,.28);
+}
+.marker .label {
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.92);
+  color: #102033;
+  border: 1px solid rgba(30,143,255,.26);
+  backdrop-filter: blur(10px);
+  text-align: center;
+  box-shadow: 0 10px 22px rgba(0,0,0,.18);
+}
+.marker .name { display: block; font-weight: 800; font-size: .9rem; }
+.marker .distance { color: #52677f; font-size: .76rem; font-weight: 700; }
+.marker.selected .label {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft), 0 14px 28px rgba(0,0,0,.24);
+}
+.marker.selected .pin {
+  box-shadow: 0 0 0 9px rgba(255,47,61,.24), 0 0 28px rgba(255,47,61,.72);
+}
+.marker.offscreen { opacity: .30; }
+
+.radar {
+  position: absolute;
+  left: 16px;
+  bottom: 92px;
+  width: 92px;
+  height: 92px;
+  border: 1px solid rgba(255,255,255,.58);
+  border-radius: 50%;
+  background: rgba(255,255,255,.88);
+  z-index: 3;
+  box-shadow: 0 10px 26px rgba(0,0,0,.20);
+}
+.radar::before, .radar::after { content: ""; position: absolute; background: rgba(30,143,255,.30); }
 .radar::before { left: 50%; top: 0; bottom: 0; width: 1px; }
 .radar::after { top: 50%; left: 0; right: 0; height: 1px; }
-.radar-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); transform: translate(-50%, -50%); }
-.detail-panel { position: absolute; left: 16px; right: 16px; bottom: 86px; z-index: 6; padding: 18px 18px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; backdrop-filter: blur(14px); box-shadow: 0 16px 40px rgba(0,0,0,.35); }
-.detail-panel .close { position: absolute; right: 12px; top: 12px; width: 36px; height: 36px; padding: 0; }
-.eyebrow { margin: 0 0 6px; color: var(--accent); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; }
+.radar-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  border: 1px solid white;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 12px rgba(255,47,61,.52);
+}
+
+.detail-panel {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 86px;
+  z-index: 6;
+  padding: 18px 18px 16px;
+  background: var(--panel);
+  color: var(--panel-fg);
+  border: 1px solid rgba(255,255,255,.78);
+  border-radius: 24px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 18px 44px rgba(0,0,0,.30);
+}
+.detail-panel .close {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: white;
+  background: var(--blue);
+  border-color: transparent;
+}
+.eyebrow { margin: 0 0 6px; color: var(--blue); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 800; }
 .detail-panel h1 { margin: 0 42px 8px 0; font-size: 1.35rem; }
 .detail-panel p { line-height: 1.55; }
-.source { color: var(--muted); font-size: .78rem; }
-.controls { position: absolute; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); display: flex; gap: 8px; z-index: 5; }
+.detail-panel ul { padding-left: 1.15rem; }
+.source { color: var(--panel-muted); font-size: .78rem; }
+
+.controls {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
 .controls button { flex: 1; }
-@media (max-width: 520px) { .topbar { align-items: flex-start; } .topbar button { padding: .55rem .75rem; } }
-.marker.waiting { max-width: 320px; opacity: .92; }
-.marker.waiting .label { border-color: rgba(255,255,255,.28); }
+.controls button:nth-child(2) {
+  color: #ffffff;
+  background: var(--blue);
+  border-color: rgba(255,255,255,.38);
+}
+
+@media (max-width: 520px) {
+  .topbar { align-items: flex-start; }
+  .topbar button { padding: .55rem .75rem; }
+  .compass { top: 112px; }
+}
+.marker.waiting { max-width: 320px; opacity: .96; }
+.marker.waiting .label { border-color: rgba(30,143,255,.32); }
 .marker.waiting .distance { display: block; max-width: 280px; }
