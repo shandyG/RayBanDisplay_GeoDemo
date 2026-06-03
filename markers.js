@@ -1,4 +1,4 @@
-window.DEMO_MARKERS = [
+window.MARKERS = [
   {
     id: "park-center",
     name: "新桜ケ丘第二公園",
