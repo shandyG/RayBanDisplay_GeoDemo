@@ -1,4 +1,4 @@
-window.MARKERS = [
+window.DEMO_MARKERS = [
   {
     id: "park-center",
     name: "新桜ケ丘第二公園",
@@ -18,48 +18,21 @@ window.MARKERS = [
     source: "Yahoo!マップ・横浜市公園探訪情報ベース"
   },
   {
-    id: "bus-stop-1",
-    name: "新桜ケ丘第1バス停方面",
-    lat: 35.44949,
-    lng: 139.56363,
-    category: "transport",
-    description: "新桜ケ丘第二公園の最寄りバス停方面。公式ページでは新桜ケ丘第1バス停から徒歩約5分、Navitime/Yahooでは徒歩約2分の案内もあります。",
-    source: "横浜市公式・Navitime・Yahoo!マップ情報ベース"
+    id: "collapse-risk-001",
+    name: "倒壊のおそれあり",
+    lat: 35.4499581,
+    lng: 139.5637407,
+    category: "hazard",
+    description: "倒壊のおそれがある地点として登録された防災デモマーカー。災害時は近づかず、周囲の安全を確認して迂回してください。",
+    source: "ユーザー投稿データ"
   },
   {
-    id: "imai-no-oka",
-    name: "今井の丘公園方面",
-    lat: 35.44854,
-    lng: 139.56353,
-    category: "nearby-park",
-    description: "新桜ケ丘第二公園の付近スポットとして案内されている公園。住所は新桜ケ丘一丁目42番周辺。",
-    source: "横浜市公式・いこーよ情報ベース"
-  },
-  {
-    id: "first-park",
-    name: "新桜ケ丘第一公園方面",
-    lat: 35.44791,
-    lng: 139.56564,
-    category: "nearby-park",
-    description: "近隣スポットとして掲載されている新桜ケ丘第一公園方面のデモマーカー。",
-    source: "いこーよ情報ベース"
-  },
-  {
-    id: "third-park",
-    name: "新桜ケ丘第三公園方面",
-    lat: 35.44988,
-    lng: 139.56518,
-    category: "nearby-park",
-    description: "近隣スポットとして掲載されている新桜ケ丘第三公園方面のデモマーカー。",
-    source: "いこーよ情報ベース"
-  },
-  {
-    id: "fourth-park",
-    name: "新桜ケ丘第四公園方面",
-    lat: 35.45203,
-    lng: 139.56533,
-    category: "nearby-park",
-    description: "新桜ケ丘二丁目7番にある街区公園方面。新保土ケ谷ICに近い住宅地内の公園。",
-    source: "横浜市公式情報ベース"
+    id: "fujizuka-elementary-school",
+    name: "藤塚小学校",
+    lat: 35.4505119,
+    lng: 139.5622736,
+    category: "shelter",
+    description: "藤塚小学校。防災マップ上では避難先・地域拠点候補として表示するデモマーカーです。実際の避難所指定状況は自治体の最新情報を確認してください。",
+    source: "ユーザー指定データ"
   }
 ];
