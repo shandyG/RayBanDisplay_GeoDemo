@@ -23,7 +23,7 @@ window.MARKERS = [
     lat: 35.4499581,
     lng: 139.5637407,
     category: "hazard",
-    description: "倒壊のおそれがある地点として登録された防災デモマーカー。災害時は近づかず、周囲の安全を確認して迂回してください。",
+    description: "地震で家が傾いている",
     source: "ユーザー投稿データ"
   },
   {
